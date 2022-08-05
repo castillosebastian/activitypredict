@@ -66,13 +66,9 @@ Por otro lado, contamos con abundante material que aborda el tema de generar pro
 
 ```
 
-
-
-
 # Metodos utilizados
 
 # Preparación y limpieza de Datos
-
 
 # Experimentos 
 
