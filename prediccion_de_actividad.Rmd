@@ -1,5 +1,5 @@
 ---
-title: "Predicción de Actividad en Órganos Judiciales"
+title: "Algoritmos de machine learning para la predicción de actividad en organos judiciales"
 author: "Claudio Sebastián Castillo"
 date: "3/8/2022"
 output: html_document
@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 # biblio
+# https://medium.com/towards-data-science/multiple-time-series-forecast-demand-pattern-classification-using-r-part-1-31601158d33b
 # https://arxiv.org/ftp/arxiv/papers/2203/2203.06848.pdf
 # https://jisajournal.springeropen.com/track/pdf/10.1186/s13174-021-00137-8.pdf
 # https://www.cienciadedatos.net/documentos/py39-forecasting-series-temporales-con-skforecast-xgboost-lightgbm-catboost.html
@@ -18,11 +19,64 @@ knitr::opts_chunk$set(echo = TRUE)
 # https://www.kaggle.com/code/rohanrao/a-modern-time-series-tutorial/notebook
 # https://www.kaggle.com/code/ashishpatel26/light-gbm-demand-forecasting/notebook
 
-source("Unidad0_repos_and_tools.R")
+pacman::p_load(tidyverse, magrittr) # data wrangling packages
+pacman::p_load(lubridate, tsintermittent, fpp3, modeltime, timetk, modeltime.gluonts, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
+pacman::p_load(foreach, future) # parallel functions
+pacman::p_load(viridis, plotly) # visualizations packages
+theme_set(hrbrthemes::theme_ipsum()) # set default themes
+
+#source("Unidad0_repos_and_tools.R")
 
 ```
 
-## R Markdown
+# Introducción
+
+La actividad de un órgano judicial está vinculada al volumen de causas o procesos radicados en él. Este volumen de causas o procesos implica, en la práctica, un volumen aún mayor de transacciones asociadas a las peticiones que realizan las partes y las respuestas generadas por el órgano en el marco de cada proceso. De esta manera el servicio que presta cada órgano judicial a un ciudadano se traduce -generalmente- en una interacción entre peticiones y respuestas, desde el inicio de un proceso con la presentación de una demanda hasta la conclusión del mismo con el dictado de una sentencia.     
+
+Desde esa perspectiva, un buen servicio de justicia podría verse como aquél que ante cada petición de un ciudadano es capaz de responder rápidamente y cumpliendo con los criterios de justicia que deben aplicarse al caso según la ley. Incluso podría decirse que la primera parte de esa definición es redundante pues la rapidez en la respuesta, o mejor dicho, 'el cumplimiento de plazos' al ser un requisito legal es también uno de los 'criterios de justicia' que debe satisfacer todo órgano judicial. Esta idea se ha plasmado dentro el mundo judicial en frases como 'la justicia lenta no es justicia' (Dra.Hilda Kogan,vocal de la Suprema Corte de la Provincia de Buenos Aires, accesible [aquí](https://magistradoslp.org.ar/project/dra-hilda-kogan-la-justicia-lenta-no-es-justicia/).   
+
+En esa línea, puede verse con claridad que administrar eficientemente las peticiones que recibe un órgano judicial es una parte vital del servicio de justicia. Precisamente en este punto aparece la necesidad de contar no solo con estrategias de control de las peticiones ingresadas sino también de previsión de las peticiones futuras. Surge así el problema de elaborar 'pronósticos sobre la demanda' que no sería otra cosa que elaborar una idea aproximada de las peticiones que ingresarán a un órgano judicial en un período determinado. Dicho pronóstico no solo permitiría preveer los recursos necesarios para afrontar la carga de actividad que tendrá un ógano, sino también -y acaso más importante aún- poder evaluar escenarios generales y detectar cambios estructurales en la demanda que requieren otro tipo de abordajes.  
+
+
+# Trabajos vinculados (antecedentes)
+
+Elaborar pronósticos y proyecciones sobre variables importantes de un negocio es algo común en el mundo privado, aunque no abundan los casos documentados en el ambito público judicial. La abundante bibliografía que existe en materia de planificación y gestión judicial contrasta con la relativamente escasa producción relativa a estrategias de proyección de indicadores judiciales. 
+
+Por otro lado, contamos con abundante material que aborda el tema de generar proyecciones o prónosticos sobre variables importantes para un negocio a partir de modelos estadísticos y modelos de *machine learning*. 
+
+<!-- Importante revisión métodos "Review of ML and AutoML Solutions to Forecast Time‑Series Data" -->
+
+
+```{r}
+# aplicado a justicia 
+# Desarrollar
+# - https://ncsc.contentdm.oclc.org/digital/collection/ctadmin/id/2158/
+# - https://www.ncsc.org/__data/assets/pdf_file/0019/19234/role-of-strategic-planning-and-strategic-management-in-the-courts.pdf
+
+# forecast
+# https://link.springer.com/content/pdf/10.1007/s11831-022-09765-0.pdf
+
+
+```
+
+# Explorando el problema y los datos
+
+```{r}
+
+```
+
+
+
+
+# Metodos utilizados
+
+# Preparación y limpieza de Datos
+
+
+# Experimentos 
+
+# Resultados
+
 
 
 
