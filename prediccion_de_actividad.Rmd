@@ -19,6 +19,8 @@ knitr::opts_chunk$set(echo = TRUE)
 #   https://github.com/tblume1992/LazyProphet
 # https://www.kaggle.com/code/rohanrao/a-modern-time-series-tutorial/notebook
 # https://www.kaggle.com/code/ashishpatel26/light-gbm-demand-forecasting/notebook
+# predict with R
+# https://www.kaggle.com/code/kailex/m5-forecaster-v2
 
 pacman::p_load(tidyverse, magrittr) # data wrangling packages
 pacman::p_load(lubridate, tsintermittent, fpp3, modeltime, timetk, modeltime.gluonts, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
@@ -41,11 +43,11 @@ En esa línea, puede verse con claridad que administrar eficientemente las petic
 
 # Trabajos vinculados (antecedentes)
 
-Elaborar pronósticos y proyecciones sobre variables importantes de un negocio es algo común en el mundo privado, aunque no abundan los casos documentados en el ambito público judicial. La abundante bibliografía que existe en materia de planificación y gestión judicial contrasta con la relativamente escasa producción relativa a estrategias de proyección de indicadores judiciales. 
+Elaborar pronósticos y proyecciones sobre variables importantes de un negocio es algo común en el mundo privado, aunque no abundan los casos documentados en el ambito público judicial. La abundante bibliografía que existe en materia de planificación y gestión judicial contrasta con la relativamente escasa producción relativa a estrategias de proyección de indicadores vinculados al servicio de justicia. 
 
 Por otro lado, contamos con abundante material que aborda el tema de generar proyecciones o prónosticos sobre variables importantes para un negocio a partir de modelos estadísticos y modelos de *machine learning*. 
-
 <!-- Importante revisión métodos "Review of ML and AutoML Solutions to Forecast Time‑Series Data" -->
+
 
 
 ```{r}
@@ -68,9 +70,18 @@ Por otro lado, contamos con abundante material que aborda el tema de generar pro
 
 # Metodos utilizados
 
+
+
 # Preparación y limpieza de Datos
 
+Feature engeniering
+-day of the week, and special events.
+
+
 # Experimentos 
+
+Optimizacion Bayesiana. Próximamente implementar [new_stoping_criterion](https://www.amazon.science/publications/automatic-termination-for-hyperparameter-optimization)
+
 
 # Resultados
 
