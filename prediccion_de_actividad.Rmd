@@ -108,9 +108,6 @@ df %>%
          fill = 'mes') +
      facet_wrap( ~ evento)
 ```
-
-
-
 ## Presentaciones por día de Semana
 
 ```{r}
@@ -133,6 +130,16 @@ df %>%
          fill = 'día de la semana') +
      facet_wrap( ~ evento)
 ```
+## Descomposición de los elementos temporales asociados a las presentaciones
+
+
+
+```{r}
+
+```
+
+
+
 
 # Metodos utilizados
 
