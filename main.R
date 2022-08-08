@@ -1,5 +1,5 @@
-setwd("~/R/activitypredict")
-
+#setwd("~/R/activitypredict")
+setwd("~/activitypredict")
 
 pacman::p_load(tidyverse, magrittr) # data wrangling packages
 pacman::p_load(lubridate, tsintermittent, fpp3, modeltime, timetk, modeltime.gluonts, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
@@ -8,7 +8,7 @@ pacman::p_load(viridis, plotly) # visualizations packages
 theme_set(hrbrthemes::theme_ipsum()) # set default themes
 pacman::p_load(data.table)
 
-df = fread("movimientosxdptoyloc.txt" )
+df = fread("~/data/movimientos.txt" )
 
 df <- df %>% 
   group_by(codigo_organismo, tipo_movimiento, fecha) %>% 
