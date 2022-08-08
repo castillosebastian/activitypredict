@@ -23,12 +23,12 @@ knitr::opts_chunk$set(echo = TRUE)
 # https://www.kaggle.com/code/kailex/m5-forecaster-v2
 
 pacman::p_load(tidyverse, magrittr) # data wrangling packages
-pacman::p_load(lubridate, tsintermittent, fpp3, modeltime, timetk, modeltime.gluonts, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
+# pacman::p_load(lubridate, tsintermittent, fpp3, modeltime, timetk, modeltime.gluonts, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
 pacman::p_load(foreach, future) # parallel functions
 pacman::p_load(viridis, plotly) # visualizations packages
 theme_set(hrbrthemes::theme_ipsum()) # set default themes
 
-#source("Unidad0_repos_and_tools.R")
+source("main.R")
 
 ```
 
@@ -64,8 +64,74 @@ Por otro lado, contamos con abundante material que aborda el tema de generar pro
 
 # Explorando el problema y los datos
 
-```{r}
 
+```{r}
+skimr::skim(df)
+
+```
+
+## Presentaciones por Circunscripcion
+
+```{r}
+df %>% 
+  group_by(circunscripcion, fecha) %>% 
+  summarise(presentaciones_abogados = sum(presentaciones_abogados, na.rm = T)) %>% 
+  ggplot()+
+  geom_density(aes(x = presentaciones_abogados, fill = as_factor(circunscripcion)), alpha = 0.5)+
+  scale_x_log10()+
+  theme(legend.position = "note") +
+  labs(title = "Presentaciones por Circunscripcion ", 
+       subtitle = "", fill = "Circunscripcion", x = "Presentaciones Diarias") + 
+  facet_wrap( ~ circunscripcion, scales = "free")
+  
+```
+
+## Presentaciones por Mes
+
+```{r}
+options(scipen = 999)
+
+df %>% 
+  mutate(mes = lubridate::month(fecha, label = T)) %>% ungroup() %>% 
+  group_by(mes) %>% 
+  summarise_if(is.numeric, sum, na.rm = TRUE) %>% ungroup() %>% 
+  pivot_longer(!mes, names_to = "evento", values_to = "cantidad") %>% 
+  mutate(evento = factor(evento, levels = c("causas_iniciadas", 
+                                            "presentaciones_abogados",
+                                            "actos_procesales"), ordered = T)) %>% 
+  ggplot()+
+    geom_col(aes(x = mes, y = cantidad, fill=mes))+
+    scale_fill_viridis_d()+
+    labs(title = "Causas Iniciadas, presentaciones digitales y actos procesales por mes del año", 
+         x = 'mes',
+         y = 'cantidad',
+         fill = 'mes') +
+     facet_wrap( ~ evento)
+```
+
+
+
+## Presentaciones por día de Semana
+
+```{r}
+options(scipen = 999)
+
+df %>% 
+  mutate(diaS = lubridate::wday(fecha, label = T)) %>% ungroup() %>% 
+  group_by(diaS) %>% 
+  summarise_if(is.numeric, sum, na.rm = TRUE) %>% ungroup() %>% 
+  pivot_longer(!diaS, names_to = "evento", values_to = "cantidad") %>% 
+  mutate(evento = factor(evento, levels = c("causas_iniciadas", 
+                                            "presentaciones_abogados",
+                                            "actos_procesales"), ordered = T)) %>% 
+  ggplot()+
+    geom_col(aes(x = diaS, y = cantidad, fill=diaS))+
+    scale_fill_viridis_d()+
+    labs(title = "Causas Iniciadas, presentaciones digitales y actos procesales por día de semana", 
+         x = 'día se semana',
+         y = 'cantidad',
+         fill = 'día de la semana') +
+     facet_wrap( ~ evento)
 ```
 
 # Metodos utilizados

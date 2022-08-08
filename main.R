@@ -1,33 +1,31 @@
 #setwd("~/R/activitypredict")
 setwd("~/activitypredict")
 
+rm( list=ls() )  #remove all objects
+gc()             #garbage collection
+
 pacman::p_load(tidyverse, magrittr) # data wrangling packages
-pacman::p_load(lubridate, tsintermittent, fpp3, modeltime, timetk, modeltime.gluonts, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
+#pacman::p_load(lubridate, tsintermittent, fpp3, modeltime, timetk, modeltime.gluonts, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
 pacman::p_load(foreach, future) # parallel functions
 pacman::p_load(viridis, plotly) # visualizations packages
 theme_set(hrbrthemes::theme_ipsum()) # set default themes
 pacman::p_load(data.table)
 
-df = fread("~/data/movimientos.txt" )
+df = fread("~/activitypredict/data/movimientos.txt" )
 
-df <- df %>% 
-  group_by(codigo_organismo, tipo_movimiento, fecha) %>% 
-  summarise(cantidad = n()) %>% 
-  ungroup() %>% 
-  mutate(codigo_organismo = factor(codigo_organismo),
-         tipo_movimiento = factor(tipo_movimiento)) %>% 
-  filter(tipo_movimiento == "procesal_presentacion")
-  
-skimr::skim(df)
 
+df = df %>% 
+  mutate(organo = str_c(circunscripcion, "-", organismo)) %>% 
+  filter(!str_detect(circunscripcion, "Entre")) 
 
 #The Time Series mov x org
-muestra = df %>% distinct(codigo_organismo) %>% sample_n(10)
+muestra = df %>% distinct(organo) %>% sample_n(10)
+
 df %>%
-  filter(codigo_organismo %in% muestra$codigo_organismo) %>% 
-  as_tsibble(key = codigo_organismo, index = fecha) %>%
+  filter(organo %in% muestra$organo) %>% 
+  as_tsibble(key = organo, index = fecha) %>% 
   #fill_gaps(cantidad = 0, .full = end()) %>%
-  autoplot(cantidad) +
+  autoplot(presentaciones_abogados) +
   scale_color_viridis(discrete = T)
 
 # si se eligiera hacer predicción de las presentaciones por tipo de proceso se vería

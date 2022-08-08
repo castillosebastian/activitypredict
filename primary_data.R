@@ -5,6 +5,7 @@ source("~/apgyeinformes/R/all_results.R")
 source("~/apgyeinformes/R/poblacion.R")
 library(easystats)
 
+
 start_date = "2021-01-01"
 end_date = "2022-07-30"
 
@@ -12,7 +13,7 @@ end_date = "2022-07-30"
 # Actos procesales y presentaciones
 movimientos_db <- tbl(DB_PROD(), "movimientos") %>% 
   filter(fecha_hora >= start_date, fecha_hora <= end_date) %>% 
-  filter(!(dia_s %in% c("sábado", "domingo"))) %>% 
+  #filter(!(dia_s %in% c("sábado", "domingo"))) %>% 
   left_join(tbl(DB_PROD(), "lookupentidades") %>% rename(iep = organismo)) %>% 
   filter(iep %in% !!poblacion_er$organismo) %>% 
   mutate(fecha = as.Date(fecha_hora)) %>% 
