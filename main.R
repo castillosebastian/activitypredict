@@ -4,8 +4,10 @@ setwd("~/activitypredict")
 rm( list=ls() )  #remove all objects
 gc()             #garbage collection
 
-pacman::p_load(tidyverse, magrittr) # data wrangling packages
+pacman::p_load(tidyverse, magrittr, tibble, ggplot2, ggfortify, forecast) # data wrangling packages
+pacman::p_load(lubridate, modeltime, tsibble, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
 #pacman::p_load(lubridate, tsintermittent, fpp3, modeltime, timetk, modeltime.gluonts, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
+pacman::p_load(xgboost, timetk)
 pacman::p_load(foreach, future) # parallel functions
 pacman::p_load(viridis, plotly) # visualizations packages
 theme_set(hrbrthemes::theme_ipsum()) # set default themes
@@ -20,13 +22,6 @@ df = df %>%
 
 #The Time Series mov x org
 muestra = df %>% distinct(organo) %>% sample_n(10)
-
-df %>%
-  filter(organo %in% muestra$organo) %>% 
-  as_tsibble(key = organo, index = fecha) %>% 
-  #fill_gaps(cantidad = 0, .full = end()) %>%
-  autoplot(presentaciones_abogados) +
-  scale_color_viridis(discrete = T)
 
 # si se eligiera hacer predicción de las presentaciones por tipo de proceso se vería
 # que los distintos tipos tienen frecuencia variable en materia de transacciones

@@ -9,6 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 # biblio
+# https://otexts.com/fpp2/ 
+# https://cran.r-project.org/web/packages/modeltime/vignettes/getting-started-with-modeltime.html (excelente!)
 # https://medium.com/towards-data-science/multiple-time-series-forecast-demand-pattern-classification-using-r-part-1-31601158d33b
 # https://arxiv.org/ftp/arxiv/papers/2203/2203.06848.pdf
 # https://jisajournal.springeropen.com/track/pdf/10.1186/s13174-021-00137-8.pdf
@@ -29,6 +31,9 @@ pacman::p_load(viridis, plotly) # visualizations packages
 theme_set(hrbrthemes::theme_ipsum()) # set default themes
 
 source("main.R")
+
+# This toggles plots from plotly (interactive) to ggplot (static)
+interactive <- FALSE
 
 ```
 
@@ -67,6 +72,26 @@ Por otro lado, contamos con abundante material que aborda el tema de generar pro
 
 ```{r}
 skimr::skim(df)
+
+```
+
+## Presentaciones por día
+
+```{r}
+df_presentanciones = df %>% 
+  group_by(fecha) %>% 
+  summarise(presentaciones_abogados = sum(presentaciones_abogados, na.rm = T)) 
+
+df_presentanciones_xmes = df_presentanciones %>% 
+  mutate(fecha = lubridate::floor_date(fecha, unit = "month")) %>%
+  group_by(fecha) %>% summarise(presentaciones_abogados = sum(presentaciones_abogados, na.rm = T)) %>% 
+  na.omit() 
+  
+df_presentanciones_xmes %>%   
+  plot_time_series(fecha, presentaciones_abogados, 
+                   .title = "Presentaciones digitales de abogados en el Poder Judicial de Entre Rios por mes", 
+                   .x_lab = "mes", 
+                   .y_lab = "presentaciones_digitales")
 
 ```
 
@@ -130,42 +155,162 @@ df %>%
          fill = 'día de la semana') +
      facet_wrap( ~ evento)
 ```
-## Descomposición de los elementos temporales asociados a las presentaciones
+## Correlación
+
+```{r}
+GGally::ggpairs(df %>% select_if(is.numeric))
+
+```
+
+# Modelos predictivos para serie temporal de presentaciones sin variables predictoras
+
+Siguiendo a : # https://cran.r-project.org/web/packages/modeltime/vignettes/getting-started-with-modeltime.html
+
+## Dividimos el data set para entrenamiento de modelos
+
+```{r}
+
+df_presentanciones_xmes = df_presentanciones_xmes %>% rename(date = fecha, value = presentaciones_abogados)
+splits <- initial_time_split(df_presentanciones_xmes, prop = 0.8)
+```
+
+## Creando modelos: ARIMA, Exponential Smoothing, Linear Regression y MARS
+
+
+### 1 Auto ARIMA 
+
+```{r}
+
+model_fit_arima_no_boost <- arima_reg() %>%
+    set_engine(engine = "auto_arima") %>%
+    fit(value ~ date, data = training(splits))
+
+
+```
+### 2: Boosted Auto ARIMA 
+
+```{r}
+model_fit_arima_boosted <- arima_boost(min_n = 2, learn_rate = 0.015) %>%
+    set_engine(engine = "auto_arima_xgboost") %>%
+    fit(value ~ date + as.numeric(date) + factor(month(date, label = TRUE), ordered = F),
+        data = training(splits))
+```
+### 3 Exponential Smoothing 
+
+```{r}
+model_fit_ets <- exp_smoothing() %>%
+    set_engine(engine = "ets") %>%
+    fit(value ~ date, data = training(splits))
+```
+### 4 Prophet 
+
+```{r}
+model_fit_prophet <- prophet_reg() %>%
+    set_engine(engine = "prophet") %>%
+    fit(value ~ date, data = training(splits))
+
+```
+### 5 Linear Regression 
+
+```{r}
+model_fit_lm <- linear_reg() %>%
+    set_engine("lm") %>%
+    fit(value ~ as.numeric(date) + factor(month(date, label = TRUE), ordered = FALSE),
+        data = training(splits))
+```
+
+### 6 MARS
+
+```{r}
+model_spec_mars <- mars(mode = "regression") %>%
+    set_engine("earth") 
+
+recipe_spec <- recipe(value ~ date, data = training(splits)) %>%
+    step_date(date, features = "month", ordinal = FALSE) %>%
+    step_mutate(date_num = as.numeric(date)) %>%
+    step_normalize(date_num) %>%
+    step_rm(date)
+  
+wflw_fit_mars <- workflow() %>%
+    add_recipe(recipe_spec) %>%
+    add_model(model_spec_mars) %>%
+    fit(training(splits))
+```
+
+## Entrenando los modelos creados
+
+Note that some of the models have tunable parameters. It’s expected that tuning and parameter selection is performed prior to incorporating into a Modeltime Table.   
+
+
+```{r}
+models_tbl <- modeltime_table(
+    model_fit_arima_no_boost,
+    model_fit_arima_boosted,
+    model_fit_ets,
+    model_fit_prophet,
+    model_fit_lm,
+    wflw_fit_mars
+)
+```
+
+
+## Calibrando los modelos
+
+Calibrating adds a new column, .calibration_data, with the test predictions and residuals inside. A few notes on Calibration:
+Calibration is how confidence intervals and accuracy metrics are determined
+Calibration Data is simply forecasting predictions and residuals that are calculated from out-of-sample data.
+After calibrating, the calibration data follows the data through the forecasting workflow.
+
+```{r}
+calibration_tbl <- models_tbl %>%
+    modeltime_calibrate(new_data = testing(splits))
+```
+
+## Evaluando predicciones en datos de Testing y comprobando la precisión de los modelos
 
 
 
 ```{r}
+calibration_tbl %>%
+    modeltime_forecast(
+        new_data    = testing(splits),
+        actual_data = df_presentanciones_xmes
+    ) %>%
+    plot_modeltime_forecast(
+      .legend_max_width = 25, # For mobile screens
+      .interactive      = interactive
+    )
+```
+
+```{r}
+calibration_tbl %>%
+    modeltime_accuracy() %>%
+    table_modeltime_accuracy(
+        .interactive = interactive)
+```
+
+From the accuracy metrics:
+Model 5: LM is clearly the winner here with MAE of 8833
+
+
+## Refit to Full Dataset & Forecast Forward
+
+```{r}
+refit_tbl <- calibration_tbl %>%
+    modeltime_refit(data = df_presentanciones_xmes)
+
+refit_tbl %>%
+    modeltime_forecast(h = "1 years", actual_data = df_presentanciones_xmes) %>%
+    plot_modeltime_forecast(
+      .legend_max_width = 25, # For mobile screens
+      .interactive      = interactive)
 
 ```
 
-
-
-
-# Metodos utilizados
-
-
-
-# Preparación y limpieza de Datos
-
-Feature engeniering
--day of the week, and special events.
-
-
-# Experimentos 
+# LightGBM
 
 Optimizacion Bayesiana. Próximamente implementar [new_stoping_criterion](https://www.amazon.science/publications/automatic-termination-for-hyperparameter-optimization)
 
 
 # Resultados
-
-
-
-```{r}
-
-```
-
-
-
-
-
 
