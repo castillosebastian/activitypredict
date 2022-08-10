@@ -1,12 +1,14 @@
 ---
 title: "Algoritmos de machine learning para la predicción de actividad en organos judiciales"
 author: "Claudio Sebastián Castillo"
-date: "3/8/2022"
-output: html_document
+date: "`r format(Sys.Date(), '%d de %B de %Y') `"
+output: 
+  html_document:
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 
 # biblio
 # https://otexts.com/fpp2/ 
@@ -23,6 +25,11 @@ knitr::opts_chunk$set(echo = TRUE)
 # https://www.kaggle.com/code/ashishpatel26/light-gbm-demand-forecasting/notebook
 # predict with R
 # https://www.kaggle.com/code/kailex/m5-forecaster-v2
+# forecast metrics
+# https://towardsdatascience.com/time-series-forecast-error-metrics-you-should-know-cc88b8c67f27
+# file:///D:/Users/sebastian.castillo/Downloads/Psicothema2013UsingR-MAPE.pdf
+# Métodos
+# https://rdrr.io/github/AlbertoAlmuinha/neuralprophet/man/neural_prophet.html
 
 pacman::p_load(tidyverse, magrittr) # data wrangling packages
 # pacman::p_load(lubridate, tsintermittent, fpp3, modeltime, timetk, modeltime.gluonts, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
@@ -43,31 +50,19 @@ La actividad de un órgano judicial está vinculada al volumen de causas o proce
 
 Desde esa perspectiva, un buen servicio de justicia podría verse como aquél que ante cada petición de un ciudadano es capaz de responder rápidamente y cumpliendo con los criterios de justicia que deben aplicarse al caso según la ley. Incluso podría decirse que la primera parte de esa definición es redundante pues la rapidez en la respuesta, o mejor dicho, 'el cumplimiento de plazos' al ser un requisito legal es también uno de los 'criterios de justicia' que debe satisfacer todo órgano judicial. Esta idea se ha plasmado dentro el mundo judicial en frases como 'la justicia lenta no es justicia' (Dra.Hilda Kogan,vocal de la Suprema Corte de la Provincia de Buenos Aires, accesible [aquí](https://magistradoslp.org.ar/project/dra-hilda-kogan-la-justicia-lenta-no-es-justicia/).   
 
-En esa línea, puede verse con claridad que administrar eficientemente las peticiones que recibe un órgano judicial es una parte vital del servicio de justicia. Precisamente en este punto aparece la necesidad de contar no solo con estrategias de control de las peticiones ingresadas sino también de previsión de las peticiones futuras. Surge así el problema de elaborar 'pronósticos sobre la demanda' que no sería otra cosa que elaborar una idea aproximada de las peticiones que ingresarán a un órgano judicial en un período determinado. Dicho pronóstico no solo permitiría preveer los recursos necesarios para afrontar la carga de actividad que tendrá un ógano, sino también -y acaso más importante aún- poder evaluar escenarios generales y detectar cambios estructurales en la demanda que requieren otro tipo de abordajes.  
-
+En esa línea, puede verse con claridad que administrar eficientemente las peticiones que recibe un órgano judicial es una parte vital del servicio de justicia. Precisamente en este punto aparece la necesidad de contar no solo con estrategias de control de las peticiones ingresadas sino también de previsión de las peticiones futuras. Surge así el problema de elaborar 'pronósticos sobre la demanda' que no sería otra cosa que elaborar una idea aproximada de las peticiones que ingresarán a un órgano judicial en un período determinado. Dicho pronóstico no solo permitiría preveer los recursos necesarios para afrontar la carga de actividad que tendrá un ógano, sino también -y acaso más importante aún- poder evaluar escenarios generales y detectar cambios estructurales en la demanda que requieren otro tipo de abordajes (e.g. reformas legislativas, creación de nuevos órganos, entre mucho otros).  
 
 # Trabajos vinculados (antecedentes)
 
-Elaborar pronósticos y proyecciones sobre variables importantes de un negocio es algo común en el mundo privado, aunque no abundan los casos documentados en el ambito público judicial. La abundante bibliografía que existe en materia de planificación y gestión judicial contrasta con la relativamente escasa producción relativa a estrategias de proyección de indicadores vinculados al servicio de justicia. 
+Elaborar pronósticos o proyecciones sobre variables importantes de un negocio es algo común en el mundo privado, aunque no abundan los casos documentados en el ambito público judicial. La abundante producción que existe en materia de planificación (véase la proliferación de órganos especializados en la materia en los distintos Poderes Judiciales de nuestro país) y gestión judicial^[https://www.cij.gov.ar/gestion-judicial.html] contrasta con la relativamente escasa producción relativa a proyección y sus metodologías apliacadas al servicio de justicia. 
 
-Por otro lado, contamos con abundante material que aborda el tema de generar proyecciones o prónosticos sobre variables importantes para un negocio a partir de modelos estadísticos y modelos de *machine learning*. 
-<!-- Importante revisión métodos "Review of ML and AutoML Solutions to Forecast Time‑Series Data" -->
-
-
-
-```{r}
-# aplicado a justicia 
-# Desarrollar
-# - https://ncsc.contentdm.oclc.org/digital/collection/ctadmin/id/2158/
-# - https://www.ncsc.org/__data/assets/pdf_file/0019/19234/role-of-strategic-planning-and-strategic-management-in-the-courts.pdf
-
-# forecast
-# https://link.springer.com/content/pdf/10.1007/s11831-022-09765-0.pdf
-
-
-```
+Sin perjuicio de ello, contamos con abundante material que aborda el tema 'proyecciones' (*forecast*) en distintos dominios a partir de modelos estadísticos y *machine learning*  [Alsharef, A., Aggarwal, K., Sonia et al.](https://link.springer.com/content/pdf/10.1007/s11831-022-09765-0.pdf). Además de lo anterior, una basta cantidad de recursos se encuentra disponible en formato abierto y de libre acceso en github^[https://github.com/search?q=forecast].   
 
 # Explorando el problema y los datos
+
+En el caso particular del Poder Judicial de Entre Ríos, en su área de Planificación y Estadística, interesa abordar el problema de manera progresiva, buscando como punto de partida modelos que nos permitan generar proyecciones confiables (con bajo margen de error) e interpretables por nuestros usuarios. La interpretabilidad es una parte importante de la estadística pública judicial pues trata particularmente del enfoque de los productos hacia un destinatario no técnico.    
+
+En tal sentido, empleando información disponible hemos creado un dataset de trabajo para analizar y proyectar las presentaciones que puede tener el Poder Judicial, tanto a nivel global como para sus distintas unidades geográficas (circunscripciones judiciales) u operativas (órganos).   
 
 
 ```{r}
@@ -164,35 +159,38 @@ GGally::ggpairs(df %>% select_if(is.numeric))
 
 # Modelos predictivos para serie temporal de presentaciones sin variables predictoras
 
+
+
+
 Siguiendo a : # https://cran.r-project.org/web/packages/modeltime/vignettes/getting-started-with-modeltime.html
 
+## Dataset
+
+```{r}
+df_presentanciones_xmes = df_presentanciones_xmes %>% rename(date = fecha, value = presentaciones_abogados)
+DT::datatable(df_presentanciones_xmes)
+```
 ## Dividimos el data set para entrenamiento de modelos
 
 ```{r}
-
-df_presentanciones_xmes = df_presentanciones_xmes %>% rename(date = fecha, value = presentaciones_abogados)
 splits <- initial_time_split(df_presentanciones_xmes, prop = 0.8)
 ```
 
 ## Creando modelos: ARIMA, Exponential Smoothing, Linear Regression y MARS
 
-
 ### 1 Auto ARIMA 
 
 ```{r}
-
 model_fit_arima_no_boost <- arima_reg() %>%
     set_engine(engine = "auto_arima") %>%
     fit(value ~ date, data = training(splits))
-
-
 ```
 ### 2: Boosted Auto ARIMA 
 
 ```{r}
 model_fit_arima_boosted <- arima_boost(min_n = 2, learn_rate = 0.015) %>%
     set_engine(engine = "auto_arima_xgboost") %>%
-    fit(value ~ date + as.numeric(date) + factor(month(date, label = TRUE), ordered = F),
+    fit(value ~ date + as.numeric(date) + factor(month(date), ordered = F),
         data = training(splits))
 ```
 ### 3 Exponential Smoothing 
@@ -202,24 +200,16 @@ model_fit_ets <- exp_smoothing() %>%
     set_engine(engine = "ets") %>%
     fit(value ~ date, data = training(splits))
 ```
-### 4 Prophet 
-
-```{r}
-model_fit_prophet <- prophet_reg() %>%
-    set_engine(engine = "prophet") %>%
-    fit(value ~ date, data = training(splits))
-
-```
-### 5 Linear Regression 
+### 4 Linear Regression 
 
 ```{r}
 model_fit_lm <- linear_reg() %>%
     set_engine("lm") %>%
-    fit(value ~ as.numeric(date) + factor(month(date, label = TRUE), ordered = FALSE),
+    fit(value ~ as.numeric(date) + factor(month(date), ordered = FALSE),
         data = training(splits))
 ```
 
-### 6 MARS
+### 5 MARS
 
 ```{r}
 model_spec_mars <- mars(mode = "regression") %>%
@@ -239,27 +229,21 @@ wflw_fit_mars <- workflow() %>%
 
 ## Entrenando los modelos creados
 
-Note that some of the models have tunable parameters. It’s expected that tuning and parameter selection is performed prior to incorporating into a Modeltime Table.   
-
+Se entrenan los modelos con la configuración de parámetros asignada.
 
 ```{r}
 models_tbl <- modeltime_table(
     model_fit_arima_no_boost,
     model_fit_arima_boosted,
     model_fit_ets,
-    model_fit_prophet,
     model_fit_lm,
     wflw_fit_mars
 )
 ```
 
-
 ## Calibrando los modelos
 
-Calibrating adds a new column, .calibration_data, with the test predictions and residuals inside. A few notes on Calibration:
-Calibration is how confidence intervals and accuracy metrics are determined
-Calibration Data is simply forecasting predictions and residuals that are calculated from out-of-sample data.
-After calibrating, the calibration data follows the data through the forecasting workflow.
+Los calibración permite evaluar las predicciones y calcular residuos de los pronósticos efectuados por cada modelo. Los datos para la calibración surgen de la división del dataset en datos de entrenamiento y testeo (**initial_time_split**).
 
 ```{r}
 calibration_tbl <- models_tbl %>%
@@ -267,8 +251,6 @@ calibration_tbl <- models_tbl %>%
 ```
 
 ## Evaluando predicciones en datos de Testing y comprobando la precisión de los modelos
-
-
 
 ```{r}
 calibration_tbl %>%
@@ -282,6 +264,9 @@ calibration_tbl %>%
     )
 ```
 
+Vemos que en general (salvo el 5°) los modelos tienen un ajuste *aceptable* a la serie temporal de presentaciones. Pero se advierte que todos reproducen la caida de valores de julio 2021, cosa que no sucedió en 2022, en este punto están sobreajustado las predicciones a los datos. 
+
+
 ```{r}
 calibration_tbl %>%
     modeltime_accuracy() %>%
@@ -289,9 +274,8 @@ calibration_tbl %>%
         .interactive = interactive)
 ```
 
-From the accuracy metrics:
-Model 5: LM is clearly the winner here with MAE of 8833
-
+Los resultados de las predicciones de los modelos muestran: 
+- Modelo 4, basado en una Regresión Lineal, presenta los mejores resultados considerando los errores de los modelos (residuos). Considerando el error porcentual absoluto medio (MAPE) el modelo tiene una alta calificación (Lewis:1982), con un error promedio del **10.5%**. Este modelo plantea una regresión de las presentaciones a partir de la tendencia (*as.numeric(date)*) y la estacionalidad (*month(date)*).
 
 ## Refit to Full Dataset & Forecast Forward
 
@@ -307,10 +291,10 @@ refit_tbl %>%
 
 ```
 
+# NeuralProphet
 # LightGBM
 
 Optimizacion Bayesiana. Próximamente implementar [new_stoping_criterion](https://www.amazon.science/publications/automatic-termination-for-hyperparameter-optimization)
-
 
 # Resultados
 

@@ -13,6 +13,10 @@ pacman::p_load(viridis, plotly) # visualizations packages
 theme_set(hrbrthemes::theme_ipsum()) # set default themes
 pacman::p_load(data.table)
 
+# remotes::install_github("AlbertoAlmuinha/neuralprophet")
+
+
+
 df = fread("~/activitypredict/data/movimientos.txt" )
 
 
@@ -35,6 +39,7 @@ muestra = df %>% distinct(organo) %>% sample_n(10)
 # Cuando se trabaje proyeccion por tipo de proceso ver:
 # https://towardsdatascience.com/multiple-time-series-forecast-demand-pattern-classification-using-r-part-1-31601158d33b
 # Demand Categorization — SBC Method.
+
 
 
 

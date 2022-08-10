@@ -6,8 +6,8 @@ source("~/apgyeinformes/R/poblacion.R")
 library(easystats)
 
 
-start_date = "2021-01-01"
-end_date = "2022-07-30"
+start_date = "2020-07-01"
+end_date = "2022-07-01"
 
 
 # Actos procesales y presentaciones
@@ -86,7 +86,6 @@ inic_p_resultado <- iniciadas_pen(db_con = DB_PROD(), poblacion = oga,
   rename(fecha  = finicio)
   
 inic = inic_nop_resultado %>% bind_rows(inic_p_resultado) %>% ungroup()
-
 
 movimientos <- movimientos_db %>% ungroup() %>% 
   left_join(inic, by= c("circunscripcion", "organismo", "fecha"))
