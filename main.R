@@ -12,6 +12,7 @@ pacman::p_load(foreach, future) # parallel functions
 pacman::p_load(viridis, plotly) # visualizations packages
 theme_set(hrbrthemes::theme_ipsum()) # set default themes
 pacman::p_load(data.table)
+pacman::p_load(dtplyr)
 
 # remotes::install_github("AlbertoAlmuinha/neuralprophet")
 

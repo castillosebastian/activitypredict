@@ -1,5 +1,5 @@
 ---
-title: "Algoritmos de machine learning para la predicción de actividad en organos judiciales"
+title: "Pedicción de Actividad Judicial mediante algoritmos de Machine Learning"
 author: "Claudio Sebastián Castillo"
 date: "`r format(Sys.Date(), '%d de %B de %Y') `"
 output: 
@@ -9,7 +9,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning=FALSE, message=FALSE)
-
+knitr::opts_chunk$set(fig.align = "center", fig.height = 8, fig.width = 10)
 # biblio
 # https://otexts.com/fpp2/ 
 # https://cran.r-project.org/web/packages/modeltime/vignettes/getting-started-with-modeltime.html (excelente!)
@@ -25,6 +25,7 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 # https://www.kaggle.com/code/ashishpatel26/light-gbm-demand-forecasting/notebook
 # predict with R
 # https://www.kaggle.com/code/kailex/m5-forecaster-v2
+# https://github.com/AlbertoAlmuinha/neuralprophet 
 # forecast metrics
 # https://towardsdatascience.com/time-series-forecast-error-metrics-you-should-know-cc88b8c67f27
 # file:///D:/Users/sebastian.castillo/Downloads/Psicothema2013UsingR-MAPE.pdf
@@ -70,9 +71,9 @@ skimr::skim(df)
 
 ```
 
-## Presentaciones por día
+## Presentaciones por Mes
 
-```{r}
+```{r, fig.height = 6, fig.width = 8}
 df_presentanciones = df %>% 
   group_by(fecha) %>% 
   summarise(presentaciones_abogados = sum(presentaciones_abogados, na.rm = T)) 
@@ -84,15 +85,15 @@ df_presentanciones_xmes = df_presentanciones %>%
   
 df_presentanciones_xmes %>%   
   plot_time_series(fecha, presentaciones_abogados, 
-                   .title = "Presentaciones digitales de abogados en el Poder Judicial de Entre Rios por mes", 
+                   .title = "Presentaciones digitales de abogados STJER", 
                    .x_lab = "mes", 
                    .y_lab = "presentaciones_digitales")
 
 ```
 
-## Presentaciones por Circunscripcion
+## Presentaciones diarias por Circunscripcion
 
-```{r}
+```{r, fig.height = 12, fig.width = 18}
 df %>% 
   group_by(circunscripcion, fecha) %>% 
   summarise(presentaciones_abogados = sum(presentaciones_abogados, na.rm = T)) %>% 
@@ -100,13 +101,13 @@ df %>%
   geom_density(aes(x = presentaciones_abogados, fill = as_factor(circunscripcion)), alpha = 0.5)+
   scale_x_log10()+
   theme(legend.position = "note") +
-  labs(title = "Presentaciones por Circunscripcion ", 
-       subtitle = "", fill = "Circunscripcion", x = "Presentaciones Diarias") + 
-  facet_wrap( ~ circunscripcion, scales = "free")
+  labs(fill = "Circunscripcion", x = "Presentaciones Diarias") + 
+  facet_wrap( ~ circunscripcion, scales = "free") +
+  theme(strip.text.x = element_text(size = 20))
   
 ```
 
-## Presentaciones por Mes
+## Causas Iniciadas, presentaciones digitales y actos procesales por mes 
 
 ```{r}
 options(scipen = 999)
@@ -122,13 +123,13 @@ df %>%
   ggplot()+
     geom_col(aes(x = mes, y = cantidad, fill=mes))+
     scale_fill_viridis_d()+
-    labs(title = "Causas Iniciadas, presentaciones digitales y actos procesales por mes del año", 
-         x = 'mes',
+    labs(x = 'mes',
          y = 'cantidad',
          fill = 'mes') +
      facet_wrap( ~ evento)
 ```
-## Presentaciones por día de Semana
+
+## Causas Iniciadas, presentaciones digitales y actos procesales por día 
 
 ```{r}
 options(scipen = 999)
@@ -144,23 +145,19 @@ df %>%
   ggplot()+
     geom_col(aes(x = diaS, y = cantidad, fill=diaS))+
     scale_fill_viridis_d()+
-    labs(title = "Causas Iniciadas, presentaciones digitales y actos procesales por día de semana", 
-         x = 'día se semana',
+    labs(x = 'día se semana',
          y = 'cantidad',
          fill = 'día de la semana') +
      facet_wrap( ~ evento)
 ```
+
 ## Correlación
 
 ```{r}
 GGally::ggpairs(df %>% select_if(is.numeric))
-
 ```
 
 # Modelos predictivos para serie temporal de presentaciones sin variables predictoras
-
-
-
 
 Siguiendo a : # https://cran.r-project.org/web/packages/modeltime/vignettes/getting-started-with-modeltime.html
 
@@ -177,6 +174,8 @@ splits <- initial_time_split(df_presentanciones_xmes, prop = 0.8)
 ```
 
 ## Creando modelos: ARIMA, Exponential Smoothing, Linear Regression y MARS
+
+A continuación 
 
 ### 1 Auto ARIMA 
 
@@ -291,7 +290,38 @@ refit_tbl %>%
 
 ```
 
+# Experimentos
+
+```{r}
+# https://rpubs.com/tdneumann/351073 R-BO prophet
+```
+
+
+
+Modelos univariantes vs multivariantes
+
+El análisis de las presentaciones digitales considerando su evolución temporal junto a la evolución de otros indicadores judiciales representa el análisis de un proceso estocástico multivariante.
+
+El fundamento de la predictibilidad de un evento está en que su proudcción se asocia a factores que podrían permanecer estables más allá del período relevado (muestral).
+
+Series estacionarias (compuesta por unidades menores repetidas con propiedad estadísticas semejantes unas de otras: específicamente su 'autocovarianza') como aquellas compatibles con la hipótesis de haber sido generada por procesos estacionarios.
+
+
+ARIMA Y SUAVIZADO EXPONENCIAL
+
+Exponential smoothing and ARIMA models are the two most widely used approaches to time series forecasting, and provide complementary approaches to the problem. While exponential smoothing models are based on a description of the trend and seasonality in the data, ARIMA models aim to describe the autocorrelations in the data.
+
+
+
 # NeuralProphet
+
+```{r}
+#https://github.com/AlbertoAlmuinha/neuralprophet 
+#https://github.com/JedStephens/prophethyperbayes optimizacion
+# https://rpubs.com/tdneumann/351073
+```
+
+
 # LightGBM
 
 Optimizacion Bayesiana. Próximamente implementar [new_stoping_criterion](https://www.amazon.science/publications/automatic-termination-for-hyperparameter-optimization)
