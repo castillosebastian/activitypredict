@@ -1,10 +1,11 @@
 ---
-title: "Pedicción de Actividad Judicial mediante algoritmos de Machine Learning"
+title: "Explorando predicciones de la 'actividad judicial'"
 author: "Claudio Sebastián Castillo"
 date: "`r format(Sys.Date(), '%d de %B de %Y') `"
 output: 
   html_document:
     code_folding: hide
+always_allow_html: true
 ---
 
 ```{r setup, include=FALSE}
@@ -31,72 +32,77 @@ knitr::opts_chunk$set(fig.align = "center", fig.height = 8, fig.width = 10)
 # file:///D:/Users/sebastian.castillo/Downloads/Psicothema2013UsingR-MAPE.pdf
 # Métodos
 # https://rdrr.io/github/AlbertoAlmuinha/neuralprophet/man/neural_prophet.html
+#https://towardsdatascience.com/avoiding-data-leakage-in-timeseries-101-25ea13fcb15f ojo data-lea
 
-pacman::p_load(tidyverse, magrittr) # data wrangling packages
-# pacman::p_load(lubridate, tsintermittent, fpp3, modeltime, timetk, modeltime.gluonts, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
-pacman::p_load(foreach, future) # parallel functions
-pacman::p_load(viridis, plotly) # visualizations packages
-theme_set(hrbrthemes::theme_ipsum()) # set default themes
+# El análisis de las presentaciones digitales considerando su evolución temporal junto a la evolución de otros indicadores judiciales representa el análisis de un proceso estocástico multivariante.El fundamento de la predictibilidad de un evento está en que su proudcción se asocia a factores que podrían permanecer estables más allá del período relevado (muestral). Series estacionarias (compuesta por unidades menores repetidas con propiedad estadísticas semejantes unas de otras: específicamente su 'autocovarianza') como aquellas compatibles con la hipótesis de haber sido generada por procesos estacionarios.
 
 source("main.R")
-
 # This toggles plots from plotly (interactive) to ggplot (static)
 interactive <- FALSE
 
+```
+
+```{r, fig.height = 12, fig.width = 12, out.width='100%', echo=FALSE}
+knitr::include_graphics("data/presentacionesdigitales.png")
 ```
 
 # Introducción
 
 La actividad de un órgano judicial está vinculada al volumen de causas o procesos radicados en él. Este volumen de causas o procesos implica, en la práctica, un volumen aún mayor de transacciones asociadas a las peticiones que realizan las partes y las respuestas generadas por el órgano en el marco de cada proceso. De esta manera el servicio que presta cada órgano judicial a un ciudadano se traduce -generalmente- en una interacción entre peticiones y respuestas, desde el inicio de un proceso con la presentación de una demanda hasta la conclusión del mismo con el dictado de una sentencia.     
 
-Desde esa perspectiva, un buen servicio de justicia podría verse como aquél que ante cada petición de un ciudadano es capaz de responder rápidamente y cumpliendo con los criterios de justicia que deben aplicarse al caso según la ley. Incluso podría decirse que la primera parte de esa definición es redundante pues la rapidez en la respuesta, o mejor dicho, 'el cumplimiento de plazos' al ser un requisito legal es también uno de los 'criterios de justicia' que debe satisfacer todo órgano judicial. Esta idea se ha plasmado dentro el mundo judicial en frases como 'la justicia lenta no es justicia' (Dra.Hilda Kogan,vocal de la Suprema Corte de la Provincia de Buenos Aires, accesible [aquí](https://magistradoslp.org.ar/project/dra-hilda-kogan-la-justicia-lenta-no-es-justicia/).   
+Desde esa perspectiva, un buen servicio de justicia podría verse como aquél que ante cada petición de un ciudadano es capaz de responder rápidamente y cumpliendo con los criterios de justicia que deben aplicarse al caso según la ley. Incluso podría decirse que la primera parte de esa definición es redundante pues la rapidez en la respuesta, o mejor dicho, 'el cumplimiento de plazos' al ser un requisito legal es también uno de los 'criterios de justicia' que debe satisfacer todo órgano judicial. Esta idea se ha plasmado dentro el mundo judicial en frases como 'la justicia lenta no es justicia' (Dra.Hilda Kogan,vocal de la Suprema Corte de la Provincia de Buenos Aires, ver [aquí](https://magistradoslp.org.ar/project/dra-hilda-kogan-la-justicia-lenta-no-es-justicia/)).     
 
-En esa línea, puede verse con claridad que administrar eficientemente las peticiones que recibe un órgano judicial es una parte vital del servicio de justicia. Precisamente en este punto aparece la necesidad de contar no solo con estrategias de control de las peticiones ingresadas sino también de previsión de las peticiones futuras. Surge así el problema de elaborar 'pronósticos sobre la demanda' que no sería otra cosa que elaborar una idea aproximada de las peticiones que ingresarán a un órgano judicial en un período determinado. Dicho pronóstico no solo permitiría preveer los recursos necesarios para afrontar la carga de actividad que tendrá un ógano, sino también -y acaso más importante aún- poder evaluar escenarios generales y detectar cambios estructurales en la demanda que requieren otro tipo de abordajes (e.g. reformas legislativas, creación de nuevos órganos, entre mucho otros).  
+Podemos ver con claridad entoncos que administrar eficientemente las peticiones que recibe un órgano judicial es una parte vital del servicio de justicia. Precisamente en este punto aparece la necesidad de contar no solo con estrategias de control de las peticiones ingresadas sino también de previsión de las peticiones futuras. Surge así el problema de elaborar 'pronósticos sobre la demanda' que no sería otra cosa que elaborar una idea aproximada de las peticiones que ingresarán a la juticia (i.e. ante cualquiera de sus juzgados) en un determinado período. Dicho pronóstico no solo permitiría preveer los recursos necesarios para afrontar la carga de actividad que tendrá un ógano o el servicio de justicia en su conjunto, sino también -y acaso más importante aún- poder evaluar escenarios generales y detectar cambios estructurales en la demanda que requieren otro tipo de abordajes (e.g. reformas legislativas, creación de nuevos órganos, entre mucho otros).  
+
+En el siguiente post vamos a realizar una breve introducción al tema de *predecir la demanda* tomando como ejemplo de estudio al Poder Judicial de la Provincia de Entre Ríos^[Institución donde desempeño la función de Director del Área de Estadísticas y Planificación]. Dado que es un tema extenso donde resulta determinante la experimentación y el *ajuste fino* de los modelos predictivos esperamos poder efectuar una serie de post sobre el tema de *modelos predictivos* avanzando de los más simples a los más complejos. En todos los casos el objetivo será buscar modelos que nos permitan generar proyecciones confiables (con bajo margen de error) e interpretables por usuarios no técnicos (e.g. ciudadano).    
+
+Como punto de partida de esa búsqueda (una suerte de *primeros pasos*) este documento presenta una introducción a dicho proyecto analítico. Para eso, vamos a crear un dataset de trabajo que nos permita analizar y proyectar las presentaciones que puede tener el Poder Judicial a nivel global. Vamos a seleccionar y comparar modelos predictivos probados en el dominio, para luego iniciar formalmente la etapa de experimentación con dos modelos (algoritmos) más complejos: NeuralProphet y LigthGBM. 
 
 # Trabajos vinculados (antecedentes)
 
-Elaborar pronósticos o proyecciones sobre variables importantes de un negocio es algo común en el mundo privado, aunque no abundan los casos documentados en el ambito público judicial. La abundante producción que existe en materia de planificación (véase la proliferación de órganos especializados en la materia en los distintos Poderes Judiciales de nuestro país) y gestión judicial^[https://www.cij.gov.ar/gestion-judicial.html] contrasta con la relativamente escasa producción relativa a proyección y sus metodologías apliacadas al servicio de justicia. 
+Elaborar pronósticos o proyecciones sobre variables importantes de un negocio es algo común en el mundo privado, aunque no abundan los casos documentados en el ambito público judicial. La abundante producción que existe en materia de planificación (véase la proliferación de órganos especializados en la materia en los distintos Poderes Judiciales de nuestro país) y gestión judicial^[https://www.cij.gov.ar/gestion-judicial.html] contrasta con la relativamente escasa producción relativa a 'proyección', y sus metodologías apliacadas al servicio de justicia. 
 
-Sin perjuicio de ello, contamos con abundante material que aborda el tema 'proyecciones' (*forecast*) en distintos dominios a partir de modelos estadísticos y *machine learning*  [Alsharef, A., Aggarwal, K., Sonia et al.](https://link.springer.com/content/pdf/10.1007/s11831-022-09765-0.pdf). Además de lo anterior, una basta cantidad de recursos se encuentra disponible en formato abierto y de libre acceso en github^[https://github.com/search?q=forecast].   
+Sin perjuicio de ello, contamos con abundante material que aborda el tema 'proyecciones' (*forecast*) en distintos dominios a partir de modelos estadísticos y *machine learning*  ([Alsharef, A., Aggarwal, K., Sonia et al.](https://link.springer.com/content/pdf/10.1007/s11831-022-09765-0.pdf)). Además de lo anterior, una basta cantidad de recursos se encuentra disponible en formato abierto y de libre acceso en github^[https://github.com/search?q=forecast].   
 
 # Explorando el problema y los datos
 
-En el caso particular del Poder Judicial de Entre Ríos, en su área de Planificación y Estadística, interesa abordar el problema de manera progresiva, buscando como punto de partida modelos que nos permitan generar proyecciones confiables (con bajo margen de error) e interpretables por nuestros usuarios. La interpretabilidad es una parte importante de la estadística pública judicial pues trata particularmente del enfoque de los productos hacia un destinatario no técnico.    
+El dataset inicial contiene información organizada por organismo y circunscripción judicial de Entre Ríos (unidad territorial que coincide casi siempre con los departamentos de la provincia, a excepción de Federación que en la órbita judicial tiene una subdivisión en dos circunscripciones: Federación, por un lado y la ciudad de Chajarí, por el otro) entre 2020-07-01 y 2022-06-30. 
 
-En tal sentido, empleando información disponible hemos creado un dataset de trabajo para analizar y proyectar las presentaciones que puede tener el Poder Judicial, tanto a nivel global como para sus distintas unidades geográficas (circunscripciones judiciales) u operativas (órganos).   
+Dicha información describe la cantidad de presentaciones digitales efectuadas por Abogados a través del sistema informático de gestión judicial que tiene el Superior Tribunal de Justicia. Presentaciones que se realizan en las causas de distintos fueros, a saber: Civil y Comercial (que incluye Familia y Paz), Laboral y Penal.  
 
+Para los análisis iniciales de presentaciones vamos a trabajar con datos globales de toda la provincia en intervalos mensuales.    
 
-```{r}
-skimr::skim(df)
-
-```
-
-## Presentaciones por Mes
+## Presentaciones digitales mensuales de Abogados 
 
 ```{r, fig.height = 6, fig.width = 8}
 df_presentanciones = df %>% 
   group_by(fecha) %>% 
-  summarise(presentaciones_abogados = sum(presentaciones_abogados, na.rm = T)) 
+  summarise(presentaciones_abogados = sum(presentaciones_abogados, na.rm = T)) %>% as_tibble()
 
 df_presentanciones_xmes = df_presentanciones %>% 
   mutate(fecha = lubridate::floor_date(fecha, unit = "month")) %>%
   group_by(fecha) %>% summarise(presentaciones_abogados = sum(presentaciones_abogados, na.rm = T)) %>% 
-  na.omit() 
+  na.omit() %>% as_tibble()
   
-df_presentanciones_xmes %>%   
-  plot_time_series(fecha, presentaciones_abogados, 
-                   .title = "Presentaciones digitales de abogados STJER", 
-                   .x_lab = "mes", 
-                   .y_lab = "presentaciones_digitales")
-
+df_presentanciones_xmes %>% 
+  ggplot(aes(x=fecha, y=presentaciones_abogados)) +
+  geom_line( color="steelblue") + 
+  geom_point() +
+  xlab("") +
+  theme(axis.text.x=element_text(hjust=1))
 ```
+
+En el gráfico se ve cieta tendencia incipiete y la estacionalidad asocidada a los periodos de actividad y recesos judiciales (que se extienden durante todo el mes de enero y mitad de julio, donde las presentaciones -sin llegar a 0- disminuyen notablemente). Estamos viendo 24 meses dado que no se disponen de datos previos, lo cual es un límite importante a considerar en el análisis de la serie temporal.   
 
 ## Presentaciones diarias por Circunscripcion
 
-```{r, fig.height = 12, fig.width = 18}
+En el siguiente gráfico de densidad vemos las presentaciones agrupadas por circunscripción judicial. Vemos que salvo La Paz e Islas, nos encontramos con distribuciones bimodales similares en todos los grupos. Ello podría sugerir que estamos ante datos generados por distintas poblaciones. Cabe notar que las presentaciones que estamos analizando son generadas en distintos fueros; dimensión que emplearemos más adelante como factor discriminante. 
+
+```{r}
 df %>% 
   group_by(circunscripcion, fecha) %>% 
   summarise(presentaciones_abogados = sum(presentaciones_abogados, na.rm = T)) %>% 
+  as_tibble() %>% 
   ggplot()+
   geom_density(aes(x = presentaciones_abogados, fill = as_factor(circunscripcion)), alpha = 0.5)+
   scale_x_log10()+
@@ -107,7 +113,7 @@ df %>%
   
 ```
 
-## Causas Iniciadas, presentaciones digitales y actos procesales por mes 
+## Indicadores por Mes 
 
 ```{r}
 options(scipen = 999)
@@ -116,6 +122,7 @@ df %>%
   mutate(mes = lubridate::month(fecha, label = T)) %>% ungroup() %>% 
   group_by(mes) %>% 
   summarise_if(is.numeric, sum, na.rm = TRUE) %>% ungroup() %>% 
+  as_tibble() %>% 
   pivot_longer(!mes, names_to = "evento", values_to = "cantidad") %>% 
   mutate(evento = factor(evento, levels = c("causas_iniciadas", 
                                             "presentaciones_abogados",
@@ -123,13 +130,14 @@ df %>%
   ggplot()+
     geom_col(aes(x = mes, y = cantidad, fill=mes))+
     scale_fill_viridis_d()+
+    theme(axis.text.x=element_text(angle=90,hjust=1)) +
     labs(x = 'mes',
          y = 'cantidad',
          fill = 'mes') +
      facet_wrap( ~ evento)
 ```
 
-## Causas Iniciadas, presentaciones digitales y actos procesales por día 
+## Indicadores por día 
 
 ```{r}
 options(scipen = 999)
@@ -142,6 +150,7 @@ df %>%
   mutate(evento = factor(evento, levels = c("causas_iniciadas", 
                                             "presentaciones_abogados",
                                             "actos_procesales"), ordered = T)) %>% 
+  as_tibble() %>% 
   ggplot()+
     geom_col(aes(x = diaS, y = cantidad, fill=diaS))+
     scale_fill_viridis_d()+
@@ -154,19 +163,23 @@ df %>%
 ## Correlación
 
 ```{r}
-GGally::ggpairs(df %>% select_if(is.numeric))
+GGally::ggpairs(df %>% select_if(is.numeric) %>% as_tibble())
 ```
 
-# Modelos predictivos para serie temporal de presentaciones sin variables predictoras
+# Modelos predictivos univariantes
 
-Siguiendo a : # https://cran.r-project.org/web/packages/modeltime/vignettes/getting-started-with-modeltime.html
+A continuación analizaremo la serie siguiendo distintos modelos. Emplearemos en primer lugar modelos univariantes que nos darán una idea de la *predictibilidad* de la serie^[https://otexts.com/fpp2/what-can-be-forecast.html], para luego avanzar con modelos multivariantes.    
 
 ## Dataset
 
+Transformamos nuestro dataset para ajustarlo al análisis creando un campo fecha y un campo valor para la cantidad de presentaciones digitales generadas por mes en todo el Poder Judicial.   
+
 ```{r}
-df_presentanciones_xmes = df_presentanciones_xmes %>% rename(date = fecha, value = presentaciones_abogados)
-DT::datatable(df_presentanciones_xmes)
+df_presentanciones_xmes = df_presentanciones_xmes %>% rename(date = fecha, value = presentaciones_abogados) 
+# DT::datatable(df_presentanciones_xmes)
+summary(df_presentanciones_xmes)
 ```
+
 ## Dividimos el data set para entrenamiento de modelos
 
 ```{r}
@@ -175,15 +188,21 @@ splits <- initial_time_split(df_presentanciones_xmes, prop = 0.8)
 
 ## Creando modelos: ARIMA, Exponential Smoothing, Linear Regression y MARS
 
-A continuación 
+A continuación vamos crear 4 modelos de los datos de presentaciones (modelos univariantes) que nos servirán de 'linea de base' para armar los modelos más complejos, que incluirán variables predictoras (modelos multivariantes).^[para el armado de estos modelos seguimos la guía que puede consultarse aquí https://cran.r-project.org/web/packages/modeltime/vignettes/getting-started-with-modeltime.html]   
+    
+
+Partiremos entonces de modelos extendidos y ampliamente aplicados en la literatura vinculada a proyección en series temporales: ARIMA, Suavizado Exponencial, Regresión Lineal y MARS. El primero es un modelo autorregresivo integrado de media móvil (*AutoRegresive Integrated Moving Average*) que permite obtener una descripción de un valor como una función lineal de datos anteriores y errores
+aleatorios, permitiendo resaltar los componentes cíclicos o estacionales de una serie. Para este modelo se sugieren no menos de 50 datos, el doble de lo que nosotros tenemos a disposición por lo que es esperable una baja performance del modelo. El Suavizado Exponencial calcula promedios ponderados de las observaciones asignando mayor peso cuanto más reciente es la observación.^[https://otexts.com/fpp2/expsmooth.html]. Utilizaremos, finalmente, una regresión lineal empleando la tendencia y estacionalidad de la serie, y una versión más sofisticada de regresion empleando el algoritmo MARS (*Multivariate Adaptive Regression Spline*).
 
 ### 1 Auto ARIMA 
 
 ```{r}
+# stepwise=FALSE and approximation=FALSE
 model_fit_arima_no_boost <- arima_reg() %>%
-    set_engine(engine = "auto_arima") %>%
+    set_engine(engine = "auto_arima", stepwise=FALSE,approximation=FALSE) %>%
     fit(value ~ date, data = training(splits))
 ```
+
 ### 2: Boosted Auto ARIMA 
 
 ```{r}
@@ -192,6 +211,7 @@ model_fit_arima_boosted <- arima_boost(min_n = 2, learn_rate = 0.015) %>%
     fit(value ~ date + as.numeric(date) + factor(month(date), ordered = F),
         data = training(splits))
 ```
+
 ### 3 Exponential Smoothing 
 
 ```{r}
@@ -199,6 +219,7 @@ model_fit_ets <- exp_smoothing() %>%
     set_engine(engine = "ets") %>%
     fit(value ~ date, data = training(splits))
 ```
+
 ### 4 Linear Regression 
 
 ```{r}
@@ -212,7 +233,7 @@ model_fit_lm <- linear_reg() %>%
 
 ```{r}
 model_spec_mars <- mars(mode = "regression") %>%
-    set_engine("earth") 
+    set_engine("earth", endspan = 15) 
 
 recipe_spec <- recipe(value ~ date, data = training(splits)) %>%
     step_date(date, features = "month", ordinal = FALSE) %>%
@@ -268,15 +289,14 @@ Vemos que en general (salvo el 5°) los modelos tienen un ajuste *aceptable* a l
 
 ```{r}
 calibration_tbl %>%
-    modeltime_accuracy() %>%
-    table_modeltime_accuracy(
-        .interactive = interactive)
+  modeltime_accuracy() %>% 
+  gridExtra::grid.table()
+  
 ```
 
-Los resultados de las predicciones de los modelos muestran: 
-- Modelo 4, basado en una Regresión Lineal, presenta los mejores resultados considerando los errores de los modelos (residuos). Considerando el error porcentual absoluto medio (MAPE) el modelo tiene una alta calificación (Lewis:1982), con un error promedio del **10.5%**. Este modelo plantea una regresión de las presentaciones a partir de la tendencia (*as.numeric(date)*) y la estacionalidad (*month(date)*).
+Los resultados de las predicciones muestran que el Modelo 4, basado en una Regresión Lineal, presenta los mejores resultados considerando los errores de los modelos (residuos). Considerando el error porcentual absoluto medio (MAPE) el modelo tiene una alta calificación (Lewis:1982), con un error promedio del **10.5%**. Este modelo plantea una regresión de las presentaciones a partir de la tendencia (*as.numeric(date)*) y la estacionalidad (*month(date)*).
 
-## Refit to Full Dataset & Forecast Forward
+## Reentrenamiento de los modelos y proyección de un año
 
 ```{r}
 refit_tbl <- calibration_tbl %>%
@@ -290,41 +310,17 @@ refit_tbl %>%
 
 ```
 
-# Experimentos
+# Consideraciones Finales
 
-```{r}
-# https://rpubs.com/tdneumann/351073 R-BO prophet
-```
+En esta nota introductoria vimo modelos simples univariantes para la predicción de presentaciones digitales en el Poder Judicial de Entre Rios, y encontramos resultados que parecen prometedores. Nuestros próximos pasos serán explorar modelos más complejos multivariantes, ampliando el dataset y períodos etudiados. En particular vamos a experimentar de manera sistemática dos algoritmos importantes y largamente documentados en la bibliografía especializada: NeuralProphet y LightGBM.    
 
+<!-- # NeuralProphet y LightGBM -->
 
-
-Modelos univariantes vs multivariantes
-
-El análisis de las presentaciones digitales considerando su evolución temporal junto a la evolución de otros indicadores judiciales representa el análisis de un proceso estocástico multivariante.
-
-El fundamento de la predictibilidad de un evento está en que su proudcción se asocia a factores que podrían permanecer estables más allá del período relevado (muestral).
-
-Series estacionarias (compuesta por unidades menores repetidas con propiedad estadísticas semejantes unas de otras: específicamente su 'autocovarianza') como aquellas compatibles con la hipótesis de haber sido generada por procesos estacionarios.
-
-
-ARIMA Y SUAVIZADO EXPONENCIAL
-
-Exponential smoothing and ARIMA models are the two most widely used approaches to time series forecasting, and provide complementary approaches to the problem. While exponential smoothing models are based on a description of the trend and seasonality in the data, ARIMA models aim to describe the autocorrelations in the data.
-
-
-
-# NeuralProphet
-
-```{r}
-#https://github.com/AlbertoAlmuinha/neuralprophet 
-#https://github.com/JedStephens/prophethyperbayes optimizacion
-# https://rpubs.com/tdneumann/351073
-```
-
-
-# LightGBM
-
-Optimizacion Bayesiana. Próximamente implementar [new_stoping_criterion](https://www.amazon.science/publications/automatic-termination-for-hyperparameter-optimization)
-
-# Resultados
+<!-- ```{r} -->
+<!-- # https://rpubs.com/tdneumann/351073 R-BO prophet -->
+<!-- #https://github.com/AlbertoAlmuinha/neuralprophet  -->
+<!-- #https://github.com/JedStephens/prophethyperbayes optimizacion -->
+<!-- # https://rpubs.com/tdneumann/351073 -->
+<!-- #[new_stoping_criterion](https://www.amazon.science/publications/automatic-termination-for-hyperparameter-optimization) -->
+<!-- ``` -->
 

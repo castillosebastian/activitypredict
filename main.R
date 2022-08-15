@@ -1,32 +1,21 @@
-#setwd("~/R/activitypredict")
-setwd("~/activitypredict")
-
 rm( list=ls() )  #remove all objects
 gc()             #garbage collection
 
-pacman::p_load(tidyverse, magrittr, tibble, ggplot2, ggfortify, forecast) # data wrangling packages
-pacman::p_load(lubridate, modeltime, tsibble, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
-#pacman::p_load(lubridate, tsintermittent, fpp3, modeltime, timetk, modeltime.gluonts, tidymodels, modeltime.ensemble, modeltime.resample) # time series model packages
-pacman::p_load(xgboost, timetk)
+pacman::p_load(tidyverse, magrittr, tibble, ggplot2, ggfortify, forecast, data.table, dplyr, dtplyr) # data wrangling packages
+pacman::p_load(lubridate,xgboost, timetk, modeltime, fpp3, tsibble, tidymodels, modeltime.gluonts, modeltime.ensemble, modeltime.resample) # time series model packages
 pacman::p_load(foreach, future) # parallel functions
 pacman::p_load(viridis, plotly) # visualizations packages
 theme_set(hrbrthemes::theme_ipsum()) # set default themes
-pacman::p_load(data.table)
-pacman::p_load(dtplyr)
 
 # remotes::install_github("AlbertoAlmuinha/neuralprophet")
 
-
-
-df = fread("~/activitypredict/data/movimientos.txt" )
+df = fread("data/movimientos.txt" )
 
 
 df = df %>% 
   mutate(organo = str_c(circunscripcion, "-", organismo)) %>% 
-  filter(!str_detect(circunscripcion, "Entre")) 
-
-#The Time Series mov x org
-muestra = df %>% distinct(organo) %>% sample_n(10)
+  filter(!str_detect(circunscripcion, "Entre")) %>% 
+  select(-organismo)
 
 # si se eligiera hacer predicción de las presentaciones por tipo de proceso se vería
 # que los distintos tipos tienen frecuencia variable en materia de transacciones
