@@ -1,0 +1,13 @@
+2022-08-15 11:59:55,479; INFO; nprophet.config; __post_init__; Note: Trend changepoint regularization is experimental.
+2022-08-15 11:59:55,502; WARNING; nprophet; fit; Parts of code may break if using other than daily data.
+2022-08-15 11:59:55,513; INFO; nprophet.utils; set_auto_seasonalities; Disabling weekly seasonality. Run NeuralProphet with weekly_seasonality=True to override this.
+2022-08-15 11:59:55,513; INFO; nprophet.utils; set_auto_seasonalities; Disabling daily seasonality. Run NeuralProphet with daily_seasonality=True to override this.
+2022-08-15 11:59:55,514; INFO; nprophet.config; set_auto_batch_epoch; Auto-set batch_size to 8
+2022-08-15 11:59:55,514; INFO; nprophet.config; set_auto_batch_epoch; Auto-set epochs to 139
+2022-08-15 12:10:14,063; INFO; nprophet.config; __post_init__; Note: Trend changepoint regularization is experimental.
+2022-08-15 12:10:14,067; WARNING; nprophet; fit; Parts of code may break if using other than daily data.
+2022-08-15 12:10:14,076; INFO; nprophet.utils; set_auto_seasonalities; Disabling yearly seasonality. Run NeuralProphet with yearly_seasonality=True to override this.
+2022-08-15 12:10:14,076; INFO; nprophet.utils; set_auto_seasonalities; Disabling weekly seasonality. Run NeuralProphet with weekly_seasonality=True to override this.
+2022-08-15 12:10:14,076; INFO; nprophet.utils; set_auto_seasonalities; Disabling daily seasonality. Run NeuralProphet with daily_seasonality=True to override this.
+2022-08-15 12:10:14,076; INFO; nprophet.config; set_auto_batch_epoch; Auto-set batch_size to 2
+2022-08-15 12:10:14,076; INFO; nprophet.config; set_auto_batch_epoch; Auto-set epochs to 888
