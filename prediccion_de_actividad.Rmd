@@ -36,7 +36,7 @@ knitr::opts_chunk$set(fig.align = "center", fig.height = 8, fig.width = 10)
 
 # El análisis de las presentaciones digitales considerando su evolución temporal junto a la evolución de otros indicadores judiciales representa el análisis de un proceso estocástico multivariante.El fundamento de la predictibilidad de un evento está en que su proudcción se asocia a factores que podrían permanecer estables más allá del período relevado (muestral). Series estacionarias (compuesta por unidades menores repetidas con propiedad estadísticas semejantes unas de otras: específicamente su 'autocovarianza') como aquellas compatibles con la hipótesis de haber sido generada por procesos estacionarios.
 
-source("main.R")
+source("R/main.R")
 # This toggles plots from plotly (interactive) to ggplot (static)
 interactive <- FALSE
 
