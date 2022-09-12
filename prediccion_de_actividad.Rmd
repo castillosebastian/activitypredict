@@ -2,10 +2,11 @@
 title: "Explorando predicciones de la 'actividad judicial'"
 author: "Claudio Sebastián Castillo"
 date: "`r format(Sys.Date(), '%d de %B de %Y') `"
-output: 
+output:
+  pdf_document: default
   html_document:
     code_folding: hide
-always_allow_html: true
+always_allow_html: yes
 ---
 
 ```{r setup, include=FALSE}

@@ -1,0 +1,29 @@
+---
+title: "Untitled"
+author: "Área de Planificación Gestión y Estadística"
+date: "12/9/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r cars}
+produccion %>%
+  group_by(Instancia) %>%
+  plot_time_series(Mes, Produccion,
+                  .facet_ncol  = 3,
+                  .smooth      = FALSE, 
+                  .interactive = TRUE)
+```
+
+```{r}
+produccion %>% 
+  filter(Instancia == Instancia[1]) %>% 
+  plot_seasonal_diagnostics(.date_var = Mes,
+                            .value = Produccion)
+```
+

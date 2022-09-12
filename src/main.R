@@ -5,7 +5,7 @@ pacman::p_load(tidyverse, magrittr, tibble, ggplot2, ggfortify, forecast, data.t
 pacman::p_load(lubridate,xgboost, timetk, modeltime, fpp3, tsibble, tidymodels, modeltime.gluonts, modeltime.ensemble, modeltime.resample) # time series model packages
 pacman::p_load(foreach, future) # parallel functions
 pacman::p_load(viridis, plotly) # visualizations packages
-theme_set(hrbrthemes::theme_ipsum()) # set default themes
+
 
 # remotes::install_github("AlbertoAlmuinha/neuralprophet")
 
