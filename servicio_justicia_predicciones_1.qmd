@@ -1,0 +1,28 @@
+---
+title: "Serivio de Justicia: Predicciones"
+format: revealjs
+editor: visual
+author: "Claudio Sebastián Castillo"
+date: "`r format(Sys.Date(), '%d de %B de %Y') `"
+---
+
+```{r, echo=FALSE}
+
+source("src/predicciones1.R")
+
+```
+
+## Introduccion 
+
+```{r}
+1 + 1
+```
+
+```{r}
+monthly_retail_tbl %>%
+  group_by(Industry) %>%
+  plot_time_series(Month, Turnover,
+                     .facet_ncol  = 4,
+                     .smooth      = FALSE, 
+                     .interactive = TRUE)
+```
