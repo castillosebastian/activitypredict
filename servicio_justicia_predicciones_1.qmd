@@ -7,9 +7,11 @@ date: "`r format(Sys.Date(), '%d de %B de %Y') `"
 ---
 
 ```{r, echo=FALSE}
-
 source("src/predicciones1.R")
+```
 
+```{r, out.width='100%', echo=FALSE}
+knitr::include_graphics("data/presentacionesdigitales.png")
 ```
 
 ## Introduccion 
